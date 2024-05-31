@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace applist_reynes.Pages
 {
@@ -14,10 +16,12 @@ namespace applist_reynes.Pages
         }
 
         public List<Book> Books { get; set; }
+        public string GenreFilter { get; set; }
 
-        public void OnGet()
+        public void OnGet(string? sortBy = null, string? sortAsc = "true", string? genre = null)
         {
-            Books = new List<Book>
+            GenreFilter = genre;
+            List<Book> books = new List<Book>
             {
                 new Book {
                     Title = "To Kill a Mockingbird",
@@ -79,14 +83,36 @@ namespace applist_reynes.Pages
                     Year = 1922 }
 
             };
-        }
-    }
 
-    public class Book
-    {
-        public string Title { get; set; }
-        public string Author { get; set; }
-        public string Genre { get; set; }
-        public int Year { get; set; }
+            if (!string.IsNullOrEmpty(genre))
+            {
+                books = books.Where(b => b.Genre.ToLower().Contains(genre.ToLower())).ToList();
+            }
+
+            if (sortBy == null || sortAsc == null)
+            {
+                Books = books;
+                return;
+            }
+
+            bool ascending = sortAsc.ToLower() == "true";
+
+            Books = sortBy.ToLower() switch
+            {
+                "title" => ascending ? books.OrderBy(b => b.Title).ToList() : books.OrderByDescending(b => b.Title).ToList(),
+                "author" => ascending ? books.OrderBy(b => b.Author).ToList() : books.OrderByDescending(b => b.Author).ToList(),
+                "genre" => ascending ? books.OrderBy(b => b.Genre).ToList() : books.OrderByDescending(b => b.Genre).ToList(),
+                "year" => ascending ? books.OrderBy(b => b.Year).ToList() : books.OrderByDescending(b => b.Year).ToList(),
+                _ => books
+            };
+        }
+
+        public class Book
+        {
+            public string Title { get; set; }
+            public string Author { get; set; }
+            public string Genre { get; set; }
+            public int Year { get; set; }
+        }
     }
 }

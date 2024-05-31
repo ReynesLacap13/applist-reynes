@@ -8,32 +8,57 @@
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
-<div class="container">
-    <h1 class="my-4">Book List</h1>
 
-    <table class="table table-striped">
-        <thead>
+<form method="get">
+    <div class="form-group">
+        <label for="genre">Filter by Genre:</label>
+        <input type="text" id="genre" name="genre" value="@Model.GenreFilter" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">
+                Title
+                <div class="btn-group" role="group" aria-label="">
+                    <a href="~/index?sortBy=title&sortAsc=false" type="button" class="btn btn-secondary">&lt;</a>
+                    <a href="~/index?sortBy=title&sortAsc=true" type="button" class="btn btn-secondary">&gt;</a>
+                </div>
+            </th>
+            <th scope="col">
+                Author
+                <div class="btn-group" role="group" aria-label="">
+                    <a href="~/index?sortBy=author&sortAsc=false" type="button" class="btn btn-secondary">&lt;</a>
+                    <a href="~/index?sortBy=author&sortAsc=true" type="button" class="btn btn-secondary">&gt;</a>
+                </div>
+            </th>
+            <th scope="col">
+                Genre
+                <div class="btn-group" role="group" aria-label="">
+                    <a href="~/index?sortBy=genre&sortAsc=false" type="button" class="btn btn-secondary">&lt;</a>
+                    <a href="~/index?sortBy=genre&sortAsc=true" type="button" class="btn btn-secondary">&gt;</a>
+                </div>
+            </th>
+            <th scope="col">
+                Year
+                <div class="btn-group" role="group" aria-label="">
+                    <a href="~/index?sortBy=year&sortAsc=false" type="button" class="btn btn-secondary">&lt;</a>
+                    <a href="~/index?sortBy=year&sortAsc=true" type="button" class="btn btn-secondary">&gt;</a>
+                </div>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in Model.Books)
+        {
             <tr>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Genre</th>
-                <th>Year</th>
+                <td>@book.Title</td>
+                <td>@book.Author</td>
+                <td>@book.Genre</td>
+                <td>@book.Year</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var book in Model.Books)
-            {
-                <tr>
-                    <td>@book.Title</td>
-                    <td>@book.Author</td>
-                    <td>@book.Genre</td>
-                    <td>@book.Year</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-
-@section Scripts {
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-}
+        }
+    </tbody>
+</table>
