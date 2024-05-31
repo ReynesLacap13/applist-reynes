@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace applist_reynes.Pages
 {
@@ -16,12 +16,26 @@ namespace applist_reynes.Pages
         }
 
         public List<Book> Books { get; set; }
-        public string GenreFilter { get; set; }
 
-        public void OnGet(string? sortBy = null, string? sortAsc = "true", string? genre = null)
+        [BindProperty]
+        public SearchParameters? SearchParams { get; set; }
+
+        public void OnGet(string? keyword = "", string? searchBy = "", string? sortBy = null, string? sortAsc = "true", int pageSize = 5, int pageIndex = 1)
         {
-            GenreFilter = genre;
-            List<Book> books = new List<Book>
+            if (SearchParams == null)
+            {
+                SearchParams = new SearchParameters()
+                {
+                    SortBy = sortBy,
+                    SortAsc = sortAsc == "true",
+                    SearchBy = searchBy,
+                    Keyword = keyword,
+                    PageIndex = pageIndex,
+                    PageSize = pageSize
+                };
+            }
+
+            List<Book> books = new List<Book>()
             {
                 new Book {
                     Title = "To Kill a Mockingbird",
@@ -84,27 +98,79 @@ namespace applist_reynes.Pages
 
             };
 
-            if (!string.IsNullOrEmpty(genre))
+            if (!string.IsNullOrEmpty(SearchParams.SearchBy) && !string.IsNullOrEmpty(SearchParams.Keyword))
             {
-                books = books.Where(b => b.Genre.ToLower().Contains(genre.ToLower())).ToList();
+                if (SearchParams.SearchBy.ToLower() == "title")
+                {
+                    books = books.Where(b => b.Title.ToLower().Contains(SearchParams.Keyword.ToLower())).ToList();
+                }
+                else if (SearchParams.SearchBy.ToLower() == "author")
+                {
+                    books = books.Where(b => b.Author.ToLower().Contains(SearchParams.Keyword.ToLower())).ToList();
+                }
+                else if (SearchParams.SearchBy.ToLower() == "genre")
+                {
+                    books = books.Where(b => b.Genre.ToLower().Contains(SearchParams.Keyword.ToLower())).ToList();
+                }
+                else if (SearchParams.SearchBy.ToLower() == "year")
+                {
+                    books = books.Where(b => b.Year.ToString().Contains(SearchParams.Keyword)).ToList();
+                }
+            }
+            else if (string.IsNullOrEmpty(SearchParams.SearchBy) && !string.IsNullOrEmpty(SearchParams.Keyword))
+            {
+                books = books.Where(b => b.Title.ToLower().Contains(SearchParams.Keyword.ToLower())).ToList();
             }
 
-            if (sortBy == null || sortAsc == null)
+            if (SearchParams.SortBy == null || SearchParams.SortAsc == null)
             {
                 Books = books;
-                return;
+                goto page;
             }
 
-            bool ascending = sortAsc.ToLower() == "true";
-
-            Books = sortBy.ToLower() switch
+            if (SearchParams.SortBy.ToLower() == "title" && SearchParams.SortAsc == true)
             {
-                "title" => ascending ? books.OrderBy(b => b.Title).ToList() : books.OrderByDescending(b => b.Title).ToList(),
-                "author" => ascending ? books.OrderBy(b => b.Author).ToList() : books.OrderByDescending(b => b.Author).ToList(),
-                "genre" => ascending ? books.OrderBy(b => b.Genre).ToList() : books.OrderByDescending(b => b.Genre).ToList(),
-                "year" => ascending ? books.OrderBy(b => b.Year).ToList() : books.OrderByDescending(b => b.Year).ToList(),
-                _ => books
-            };
+                Books = books.OrderBy(b => b.Title).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "title" && SearchParams.SortAsc == false)
+            {
+                Books = books.OrderByDescending(b => b.Title).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "author" && SearchParams.SortAsc == true)
+            {
+                Books = books.OrderBy(b => b.Author).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "author" && SearchParams.SortAsc == false)
+            {
+                Books = books.OrderByDescending(b => b.Author).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "genre" && SearchParams.SortAsc == true)
+            {
+                Books = books.OrderBy(b => b.Genre).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "genre" && SearchParams.SortAsc == false)
+            {
+                Books = books.OrderByDescending(b => b.Genre).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "year" && SearchParams.SortAsc == true)
+            {
+                Books = books.OrderBy(b => b.Year).ToList();
+            }
+            else if (SearchParams.SortBy.ToLower() == "year" && SearchParams.SortAsc == false)
+            {
+                Books = books.OrderByDescending(b => b.Year).ToList();
+            }
+            else
+            {
+                Books = books;
+            }
+
+        page:
+            // Paging
+            int totalPages = (int)Math.Ceiling((double)Books.Count / SearchParams.PageSize.Value);
+            int skip = (SearchParams.PageIndex.Value - 1) * SearchParams.PageSize.Value;
+            Books = Books.Skip(skip).Take(SearchParams.PageSize.Value).ToList();
+            SearchParams.PageCount = totalPages;
         }
 
         public class Book
@@ -113,6 +179,17 @@ namespace applist_reynes.Pages
             public string Author { get; set; }
             public string Genre { get; set; }
             public int Year { get; set; }
+        }
+
+        public class SearchParameters
+        {
+            public string? SearchBy { get; set; }
+            public string? Keyword { get; set; }
+            public string? SortBy { get; set; }
+            public bool? SortAsc { get; set; }
+            public int? PageSize { get; set; }
+            public int? PageIndex { get; set; }
+            public int? PageCount { get; set; }
         }
     }
 }
